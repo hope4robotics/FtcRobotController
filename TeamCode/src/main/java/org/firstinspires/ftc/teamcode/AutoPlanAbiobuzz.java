@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 
 @Autonomous(name = "AutoPlanAbiobuzz", group = "BioBuzz")
 public class AutoPlanAbiobuzz extends LinearOpMode {
-    private static final long LAUNCH_TIMEOUT_MS = 5000;
+    private static final long LAUNCH_TIMEOUT_MS = 10000;
     private static final long DRIVE_DURATION_MS = 1000;
     private static final long INTAKE_PAUSE_MS = 1000;
     private static final long TURN_TIMEOUT_MS = 2000;
@@ -31,9 +31,10 @@ public class AutoPlanAbiobuzz extends LinearOpMode {
             return;
         }
 
+        drive.resetHeading();
         double startingHeading = drive.getHeadingDegrees();
         launcher.launchForMS(LAUNCH_TIMEOUT_MS, intake, this);
-        drive.driveFieldRelativeForMS(-DIAGONAL_AXIS_POWER, DIAGONAL_AXIS_POWER, 0,
+        drive.driveFieldRelativeForMS(-DIAGONAL_AXIS_POWER, -DIAGONAL_AXIS_POWER, 0,
                 DRIVE_DURATION_MS, this);
 
         if (!opModeIsActive()) {
@@ -41,7 +42,7 @@ public class AutoPlanAbiobuzz extends LinearOpMode {
         }
         try {
             intake.intakeOn();
-            drive.driveFieldRelativeForMS(DIAGONAL_AXIS_POWER, DIAGONAL_AXIS_POWER, 0,
+            drive.driveFieldRelativeForMS(DIAGONAL_AXIS_POWER, -DIAGONAL_AXIS_POWER, 0,
                     DRIVE_DURATION_MS, this);
             if (opModeIsActive()) {
                 sleep(INTAKE_PAUSE_MS);

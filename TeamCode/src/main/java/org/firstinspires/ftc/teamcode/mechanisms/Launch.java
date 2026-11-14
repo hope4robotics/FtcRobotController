@@ -32,8 +32,8 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class Launch {
-    private static final int TARGET_VELOCITY = 1250; // Encoder ticks per second
-    private static final int MIN_FEED_VELOCITY = 1200;
+    private static final int TARGET_VELOCITY = 1300; // Encoder ticks per second
+    private static final int MIN_FEED_VELOCITY = 1250;
     private static final double INTAKE_ASSIST_POWER = 0.5;
 
     private DcMotorEx launcher;

@@ -23,6 +23,12 @@ public class BioBuzzFieldOriented extends OpMode {
     }
 
     @Override
+    public void start() {
+        drive.resetHeading();
+        resetButtonWasDown = gamepad1.a;
+    }
+
+    @Override
     public void loop() {
         boolean resetButtonDown = gamepad1.a;
         if (resetButtonDown && !resetButtonWasDown) {
@@ -30,8 +36,10 @@ public class BioBuzzFieldOriented extends OpMode {
         }
         resetButtonWasDown = resetButtonDown;
 
-        drive.driveFieldRelative(-gamepad1.left_stick_y, gamepad1.left_stick_x,
-                gamepad1.right_stick_x);
+        double forward = -gamepad1.left_stick_y;
+        double strafe = gamepad1.left_stick_x;
+        double rotate = gamepad1.right_stick_x;
+        drive.driveFieldRelative(forward, strafe, rotate);
 
         double intakeAssist = launcher.launch(gamepad1.right_bumper);
         double intakePower = Range.clip(

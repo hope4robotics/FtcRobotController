@@ -10,10 +10,15 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 public class MecanumDrive {
+
+    // Positive offsets rotate field-forward counterclockwise from the nose.
+    private static final double FIELD_FORWARD_OFFSET_DEGREES = 90.0;
 
     private static final double TURN_TOLERANCE_DEGREES = 2.0;
     private static final double TURN_POWER_PER_DEGREE = 0.02;
@@ -97,7 +102,7 @@ public class MecanumDrive {
     }
 
     public void driveFieldRelative(double forward, double strafe, double rotate) {
-        double theta = Math.atan2(forward, strafe);
+        double theta = Math.atan2(forward, strafe) + Math.toRadians(FIELD_FORWARD_OFFSET_DEGREES);
         double r = Math.hypot(strafe, forward);
 
         theta = AngleUnit.normalizeRadians(theta -
