@@ -3,8 +3,10 @@
 Welcome!
 
 This module, TeamCode, is the place where you will write/paste the code for your team's
-robot controller App. This module is currently empty (a clean slate) but the
-process for adding OpModes is straightforward.
+robot controller App. WAM Robotics team 31778 maintains its BIOBUZZ OpModes and
+mechanism helpers in this package. See the [code diagrams and review](../../../../../../../diagrams/README.md)
+for class relationships, driver controls, hardware names, and Java 17 build setup.
+The process for adding OpModes is described below.
 
 ## Creating your own OpModes
 
