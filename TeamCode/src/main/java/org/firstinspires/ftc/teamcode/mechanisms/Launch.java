@@ -31,9 +31,11 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 public class Launch {
-    private static final int TARGET_VELOCITY = 1300; // Encoder ticks per second
-    private static final int MIN_FEED_VELOCITY = 1250;
+    private static final int TARGET_VELOCITY = 1325; // Encoder ticks per second
+    private static final int MIN_FEED_VELOCITY = 1300;
     private static final double INTAKE_ASSIST_POWER = 0.5;
 
     private DcMotorEx launcher;
@@ -62,12 +64,25 @@ public class Launch {
         return feeding ? INTAKE_ASSIST_POWER : 0.0;
     }
 
+    public void addTelemetry(Telemetry telemetry) {
+        double launcherPower = launcher.getPower();
+        double launcherVelocity = launcher.getVelocity();
+        telemetry.addData("Launcher power (SDK)", "%.2f", launcherPower);
+        telemetry.addData("Launcher speed (ticks/s)", "%.0f", launcherVelocity);
+    }
+
     /**
      * Runs a timed launch with intake assist. The timeout includes spin-up.
      * Call after start with both mechanisms initialized. Returns true if the
      * feeder was enabled at least once.
      */
     public boolean launchForMS(long timeoutMs, Intake intake, LinearOpMode opMode) {
+        return launchForMS(timeoutMs, intake, opMode, () -> {});
+    }
+
+    /** Runs a timed launch and calls onUpdate after each launcher and intake update. */
+    public boolean launchForMS(long timeoutMs, Intake intake, LinearOpMode opMode,
+                               Runnable onUpdate) {
         ElapsedTime timer = new ElapsedTime();
         boolean fed = false;
         try {
@@ -75,6 +90,7 @@ public class Launch {
                 double intakeAssist = launch(true);
                 intake.intake(intakeAssist, 0);
                 fed |= intakeAssist > 0;
+                onUpdate.run();
             }
             return fed;
         } finally {

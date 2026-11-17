@@ -13,23 +13,30 @@ public class AutoPlanAbiobuzz extends LinearOpMode {
     private final MecanumDrive drive = new MecanumDrive();
     private final Intake intake = new Intake();
     private final Launch launcher = new Launch();
+    private String currentStep = "Waiting for Start";
 
     // Edit the route here. Each move takes (direction, power from 0 to 1, seconds).
     // FORWARD is toward the robot's starting left side, just like in TeleOp.
     private void runRoute(double startingHeading) {
-        launchFor(10.0);
+        launchFor(7.0);
         move(Direction.BACK_LEFT, 0.5, 1.0);
+        waitSeconds(0.2);
         intakeOn();
-        move(Direction.FORWARD_LEFT, 0.5, 1.0);
+        move(Direction.BACK_RIGHT, 0.5, 1.35);
         waitSeconds(1.0); // The intake stays on during this pause.
         intakeOff();
-        move(Direction.BACK_LEFT, 0.5, 1.0);
+        move(Direction.FORWARD_LEFT, 0.5, 0.5);
         turnToAngle(startingHeading, 2.0);
+        waitSeconds(1.0);
+        move(Direction.LEFT,0.5,1.3);
+        turnToAngle(180,1.0);
+        waitSeconds(5.0);
     }
 
     // Turn angles are degrees from the startup yaw reset. Positive turns left.
     // Example: turnToAngle(90, 2.0) gives the turn up to two seconds.
     private void turnToAngle(double degrees, double timeoutSeconds) {
+        showStep(String.format("Turn to %.0f degrees", degrees));
         drive.turnToAngle(degrees, milliseconds(timeoutSeconds), this);
     }
 
@@ -39,6 +46,7 @@ public class AutoPlanAbiobuzz extends LinearOpMode {
         intake.init(hardwareMap);
         launcher.init(hardwareMap);
 
+        updateTelemetry();
         waitForStart();
         if (!opModeIsActive()) {
             return;
@@ -48,7 +56,8 @@ public class AutoPlanAbiobuzz extends LinearOpMode {
         try {
             runRoute(drive.getHeadingDegrees());
         } finally {
-            intakeOff();
+            intake.intakeOff();
+            showStep(opModeIsActive() ? "Route complete" : "Stopped");
         }
     }
 
@@ -68,28 +77,45 @@ public class AutoPlanAbiobuzz extends LinearOpMode {
 
     private void move(Direction direction, double power, double seconds) {
         double drivePower = Range.clip(power, 0.0, 1.0);
+        showStep(String.format("Move %s at %.0f%% for %.1f s",
+                direction.name(), drivePower * 100, seconds));
         drive.driveFieldRelativeForMS(direction.forward * drivePower,
                 direction.strafe * drivePower, 0, milliseconds(seconds), this);
     }
 
     private void launchFor(double seconds) {
-        launcher.launchForMS(milliseconds(seconds), intake, this);
+        showStep(String.format("Launch for %.1f s", seconds));
+        launcher.launchForMS(milliseconds(seconds), intake, this, this::updateTelemetry);
     }
 
     private void intakeOn() {
         if (opModeIsActive()) {
             intake.intakeOn();
+            showStep("Intake on");
         }
     }
 
     private void intakeOff() {
         intake.intakeOff();
+        showStep("Intake off");
     }
 
     private void waitSeconds(double seconds) {
         if (opModeIsActive()) {
+            showStep(String.format("Wait %.1f s", seconds));
             sleep(milliseconds(seconds));
         }
+    }
+
+    private void showStep(String step) {
+        currentStep = step;
+        updateTelemetry();
+    }
+
+    private void updateTelemetry() {
+        telemetry.addData("Current step", currentStep);
+        launcher.addTelemetry(telemetry);
+        telemetry.update();
     }
 
     private long milliseconds(double seconds) {

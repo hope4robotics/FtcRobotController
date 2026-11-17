@@ -45,6 +45,12 @@ public class BioBuzzFieldOriented extends OpMode {
         double intakePower = Range.clip(
                 gamepad1.right_trigger - gamepad1.left_trigger + intakeAssist, -1.0, 1.0);
         intake.intake(intakePower, 0);
+
+        String currentAction = intakeAssist > 0 ? "Feeding" :
+                gamepad1.right_bumper ? "Launcher spinning up" : "Driver control";
+        telemetry.addData("Current action", currentAction);
+        launcher.addTelemetry(telemetry);
+        telemetry.update();
     }
 
     @Override
