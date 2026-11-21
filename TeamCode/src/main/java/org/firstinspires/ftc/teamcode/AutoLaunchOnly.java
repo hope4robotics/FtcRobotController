@@ -8,8 +8,8 @@ import org.firstinspires.ftc.teamcode.mechanisms.Intake;
 import org.firstinspires.ftc.teamcode.mechanisms.Launch;
 import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 
-@Autonomous(name = "AutoPlanAbiobuzz", group = "BioBuzz")
-public class AutoPlanAbiobuzz extends LinearOpMode {
+@Autonomous(name = "AutoLaunchOnly", group = "BioBuzz")
+public class AutoLaunchOnly extends LinearOpMode {
     private final MecanumDrive drive = new MecanumDrive();
     private final Intake intake = new Intake();
     private final Launch launcher = new Launch();

@@ -110,7 +110,7 @@ public class ConceptTelemetry extends LinearOpMode  {
          * As an illustration, the first line on our telemetry display will display the battery voltage.
          * The idea here is that it's expensive to compute the voltage (at least for purposes of illustration)
          * so you don't want to do it unless the data is _actually_ going to make it to the
-         * driver station (recall that telemetry transmission is throttled to reduce bandwidth use.
+         * driver station (recall that telemetry transmission is throttled to reduce bandwidth use.)
          * Note that getBatteryVoltage() below returns 'Infinity' if there's no voltage sensor attached.
          *
          * @see Telemetry#getMsTransmissionInterval()

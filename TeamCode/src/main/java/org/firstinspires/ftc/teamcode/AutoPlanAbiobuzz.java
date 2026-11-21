@@ -19,11 +19,13 @@ public class AutoPlanAbiobuzz extends LinearOpMode {
     // FORWARD is toward the robot's starting left side, just like in TeleOp.
     private void runRoute(double startingHeading) {
         launchFor(7.0);
-        move(Direction.BACK_LEFT, 0.5, 1.0);
-        waitSeconds(0.2);
+        turnToAngle(10, 0.2);
+        move(Direction.BACK, 0.5, 1.0);
+//        move(Direction.BACK_LEFT, 0.5, 1.0);
+//        waitSeconds(0.2);
         intakeOn();
-        move(Direction.BACK_RIGHT, 0.5, 1.35);
-        waitSeconds(1.0); // The intake stays on during this pause.
+//        move(Direction.BACK_RIGHT, 0.5, 1.35);
+//        waitSeconds(1.0); // The intake stays on during this pause.
         intakeOff();
         move(Direction.FORWARD_LEFT, 0.5, 0.5);
         turnToAngle(startingHeading, 2.0);
