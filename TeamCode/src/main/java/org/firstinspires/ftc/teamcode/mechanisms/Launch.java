@@ -36,7 +36,6 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 public class Launch {
     private static final int TARGET_VELOCITY = 1350; // Encoder ticks per second
     private static final int MIN_FEED_VELOCITY = 1325;
-    private static final double INTAKE_ASSIST_POWER = 0.5;
 
     private DcMotorEx launcher;
     private CRServo windmillServo;
@@ -53,15 +52,15 @@ public class Launch {
     }
 
     /**
-     * Updates the launcher and feeder. Returns the power to add to the driver's intake command.
+     * Updates the launcher and feeder. Returns true while the feeder is enabled.
      * In teleop, call each loop with the current right bumper state.
      */
-    public double launch(boolean requested) {
+    public boolean launch(boolean requested) {
         launcher.setVelocity(requested ? TARGET_VELOCITY : 0);
 
         boolean feeding = requested && launcher.getVelocity() > MIN_FEED_VELOCITY;
         windmillServo.setPower(feeding ? 1.0 : 0.0);
-        return feeding ? INTAKE_ASSIST_POWER : 0.0;
+        return feeding;
     }
 
     public void addTelemetry(Telemetry telemetry) {
@@ -72,7 +71,7 @@ public class Launch {
     }
 
     /**
-     * Runs a timed launch with intake assist. The timeout includes spin-up.
+     * Runs a timed launch with the intake off. The timeout includes spin-up.
      * Call after start with both mechanisms initialized. Returns true if the
      * feeder was enabled at least once.
      */
@@ -80,16 +79,15 @@ public class Launch {
         return launchForMS(timeoutMs, intake, opMode, () -> {});
     }
 
-    /** Runs a timed launch and calls onUpdate after each launcher and intake update. */
+    /** Runs a timed launch and calls onUpdate after each launcher update. */
     public boolean launchForMS(long timeoutMs, Intake intake, LinearOpMode opMode,
                                Runnable onUpdate) {
         ElapsedTime timer = new ElapsedTime();
         boolean fed = false;
+        intake.intakeOff();
         try {
             while (opMode.opModeIsActive() && timer.milliseconds() < timeoutMs) {
-                double intakeAssist = launch(true);
-                intake.intake(intakeAssist, 0);
-                fed |= intakeAssist > 0;
+                fed |= launch(true);
                 onUpdate.run();
             }
             return fed;
