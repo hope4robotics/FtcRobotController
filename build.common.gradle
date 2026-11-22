@@ -19,38 +19,38 @@ import java.util.regex.Pattern
 
 android {
 
-    compileSdkVersion 30
+    compileSdk = 30
 
     signingConfigs {
         release {
             def apkStoreFile = System.getenv("APK_SIGNING_STORE_FILE")
             if (apkStoreFile != null) {
-                keyAlias System.getenv("APK_SIGNING_KEY_ALIAS")
-                keyPassword System.getenv("APK_SIGNING_KEY_PASSWORD")
-                storeFile file(System.getenv("APK_SIGNING_STORE_FILE"))
-                storePassword System.getenv("APK_SIGNING_STORE_PASSWORD")
+                keyAlias = System.getenv("APK_SIGNING_KEY_ALIAS")
+                keyPassword = System.getenv("APK_SIGNING_KEY_PASSWORD")
+                storeFile = file(System.getenv("APK_SIGNING_STORE_FILE"))
+                storePassword = System.getenv("APK_SIGNING_STORE_PASSWORD")
             } else {
-                keyAlias 'androiddebugkey'
-                keyPassword 'android'
-                storeFile rootProject.file('libs/ftc.debug.keystore')
-                storePassword 'android'
+                keyAlias = 'androiddebugkey'
+                keyPassword = 'android'
+                storeFile = rootProject.file('libs/ftc.debug.keystore')
+                storePassword = 'android'
             }
         }
 
         debug {
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-            storeFile rootProject.file('libs/ftc.debug.keystore')
-            storePassword 'android'
+            keyAlias = 'androiddebugkey'
+            keyPassword = 'android'
+            storeFile = rootProject.file('libs/ftc.debug.keystore')
+            storePassword = 'android'
         }
     }
 
     defaultConfig {
-        signingConfig signingConfigs.debug
-        applicationId 'com.qualcomm.ftcrobotcontroller'
-        minSdkVersion 24
+        signingConfig = signingConfigs.debug
+        applicationId = 'com.qualcomm.ftcrobotcontroller'
+        minSdk = 24
         //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 28
+        targetSdk = 28
 
         /**
          * We keep the versionCode and versionName of robot controller applications in sync with
@@ -77,34 +77,34 @@ android {
         matcher.find()
         def vName = matcher.group(1)
         //
-        versionCode vCode
-        versionName vName
+        versionCode = vCode
+        versionName = vName
     }
 
     // http://google.github.io/android-gradle-dsl/current/com.android.build.gradle.internal.dsl.BuildType.html
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            signingConfig = signingConfigs.release
 
             ndk {
-                abiFilters "armeabi-v7a", "arm64-v8a"
+                abiFilters.addAll(["armeabi-v7a", "arm64-v8a"])
             }
         }
         debug {
-            debuggable true
-            jniDebuggable true
+            debuggable = true
+            jniDebuggable = true
             ndk {
-                abiFilters "armeabi-v7a", "arm64-v8a"
+                abiFilters.addAll(["armeabi-v7a", "arm64-v8a"])
             }
         }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
-    ndkVersion '21.3.6528147'
+    ndkVersion = '21.3.6528147'
 }
 
 repositories {
