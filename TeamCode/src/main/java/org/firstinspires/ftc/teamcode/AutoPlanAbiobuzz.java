@@ -15,8 +15,8 @@ import java.util.Locale;
 @Autonomous(name = "AutoPlanAbiobuzz", group = "BioBuzz")
 public class AutoPlanAbiobuzz extends LinearOpMode {
     private static final long TELEMETRY_INTERVAL_NS = 100_000_000L;
-    private static final double DRIVE_POWER = 0.5;
-    private static final double LAUNCH_SECONDS = 7.0;
+    private static final double BACK_HEADING_DEGREES = -10.0;
+    private static final double START_HEADING_DEGREES = 0.0;
 
     private long lastTelemetryTimeNs;
     private final MecanumDrive drive = new MecanumDrive();
@@ -25,32 +25,35 @@ public class AutoPlanAbiobuzz extends LinearOpMode {
     private String currentStep = "Waiting for Start";
     private String lastTurnResult = "Waiting for first turn";
 
-    // Edit the route here. Each move takes a direction and duration in seconds.
-    // FORWARD is toward the robot's starting left side, just like in TeleOp.
-    private void runRoute(double startingHeading) {
-        launch();
-        turnToAngle(-10, 1.0);
-        move(Direction.BACK, 1.0);
-        intakeOn();
-        intakeOff();
-        //noinspection ConstantValue
-        if (true) return; // Temporary route stop.
-        move(Direction.FORWARD_LEFT, 0.5);
-        turnToAngle(startingHeading, 2.0);
-        waitSeconds(1.0);
-        move(Direction.LEFT, 1.3);
-        turnToAngle(180,1.0);
-        waitSeconds(5.0);
+    // Edit the route here. Power is a fraction from 0 to 1. Durations are in seconds.
+    private boolean runRoute() {
+        launchFor(7.0);
+        if (!turnToAngle(BACK_HEADING_DEGREES, 2.0)) {
+            return false;
+        }
+        if (!driveFieldBack(0.10, 2.5, BACK_HEADING_DEGREES)) {
+            return false;
+        }
+        if (!turnToAngle(START_HEADING_DEGREES, 2.0)) {
+            return false;
+        }
+        move(Direction.FORWARD_LEFT, 0.20, 1.0);
+        move(Direction.LEFT, 0.50, 2.0);
+        return turnToAngle(START_HEADING_DEGREES, 2.0);
     }
 
     // Turn angles are degrees from the startup yaw reset. Positive turns left.
     // Example: turnToAngle(90, 2.0) gives the turn up to two seconds.
-    private void turnToAngle(double degrees, double timeoutSeconds) {
+    private boolean turnToAngle(double degrees, double timeoutSeconds) {
+        if (!opModeIsActive()) {
+            return false;
+        }
         showStep(String.format(Locale.ROOT, "Turn to %.0f degrees", degrees));
         boolean reachedTarget = drive.turnToAngle(degrees, milliseconds(timeoutSeconds), this,
                 this::updateTelemetryDuringMotion);
         lastTurnResult = String.format(Locale.ROOT, "Target %.1f°, measured %.1f° (%s)",
                 degrees, drive.getHeadingDegrees(), reachedTarget ? "reached" : "not reached");
+        return reachedTarget;
     }
 
     @Override
@@ -67,16 +70,18 @@ public class AutoPlanAbiobuzz extends LinearOpMode {
         }
 
         drive.resetHeading();
+        boolean completed = false;
         try {
-            runRoute(drive.getHeadingDegrees());
+            completed = runRoute();
         } finally {
+            drive.drive(0, 0, 0);
             intake.intakeOff();
-            showStep(opModeIsActive() ? "Route complete" : "Stopped");
+            showStep(isStopRequested() ? "Stopped" : completed ? "Route complete" : "Route interrupted");
         }
     }
 
     private enum Direction {
-        BACK(-1, 0), LEFT(0, -1), FORWARD_LEFT(0.5, -0.5);
+        FORWARD_LEFT(Math.sqrt(0.5), -Math.sqrt(0.5)), LEFT(0, -1);
 
         final double forward;
         final double strafe;
@@ -87,36 +92,26 @@ public class AutoPlanAbiobuzz extends LinearOpMode {
         }
     }
 
-    private void move(Direction direction, double seconds) {
+    private void move(Direction direction, double power, double seconds) {
+        if (!opModeIsActive()) {
+            return;
+        }
         showStep(String.format(Locale.ROOT, "Move %s at %.0f%% for %.1f s",
-                direction.name(), DRIVE_POWER * 100, seconds));
-        drive.driveFieldRelativeForMS(direction.forward * DRIVE_POWER,
-                direction.strafe * DRIVE_POWER, 0, milliseconds(seconds), this,
-                this::updateTelemetryDuringMotion);
+                direction.name(), power * 100, seconds));
+        drive.driveFieldRelativeForMS(direction.forward * power, direction.strafe * power,
+                0, milliseconds(seconds), this, this::updateTelemetryDuringMotion);
     }
 
-    private void launch() {
-        showStep(String.format(Locale.ROOT, "Launch for %.1f s", LAUNCH_SECONDS));
-        launcher.launchForMS(milliseconds(LAUNCH_SECONDS), intake, this, this::updateTelemetry);
+    private boolean driveFieldBack(double power, double seconds, double headingDegrees) {
+        showStep(String.format(Locale.ROOT, "Move field BACK at %.0f%% for %.1f s",
+                power * 100, seconds));
+        return drive.driveFieldRelativeHoldingHeading(-power, headingDegrees,
+                milliseconds(seconds), this, this::updateTelemetryDuringMotion);
     }
 
-    private void intakeOn() {
-        if (opModeIsActive()) {
-            intake.intakeOn();
-            showStep("Intake on");
-        }
-    }
-
-    private void intakeOff() {
-        intake.intakeOff();
-        showStep("Intake off");
-    }
-
-    private void waitSeconds(double seconds) {
-        if (opModeIsActive()) {
-            showStep(String.format(Locale.ROOT, "Wait %.1f s", seconds));
-            sleep(milliseconds(seconds));
-        }
+    private void launchFor(double seconds) {
+        showStep(String.format(Locale.ROOT, "Launch for %.1f s", seconds));
+        launcher.launchForMS(milliseconds(seconds), intake, this, this::updateTelemetryDuringMotion);
     }
 
     private void showStep(String step) {
