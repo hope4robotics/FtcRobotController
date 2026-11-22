@@ -45,7 +45,6 @@ import android.hardware.usb.UsbManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
@@ -383,7 +382,7 @@ public class FtcRobotControllerActivity extends Activity
     updateUI = createUpdateUI();
     callback = createUICallback(updateUI);
 
-    PreferenceManager.setDefaultValues(this, R.xml.app_settings, false);
+    initializeAppSettingsDefaults();
 
     WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
     wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "");
@@ -511,13 +510,29 @@ public class FtcRobotControllerActivity extends Activity
     preferencesHelper.writeStringPrefIfDifferent(context.getString(R.string.pref_pairing_kind), networkType.toString());
   }
 
+  private void initializeAppSettingsDefaults() {
+    // Keep these defaults in sync with app_settings.xml.
+    SharedPreferences preferences = preferencesHelper.getSharedPreferences();
+    SharedPreferences.Editor defaults = preferences.edit();
+    String deviceNameKey = getString(R.string.pref_device_name);
+    if (!preferences.contains(deviceNameKey)) {
+      defaults.putString(deviceNameKey, "");
+    }
+    String soundKey = getString(R.string.pref_sound_on_off);
+    if (!preferences.contains(soundKey)) {
+      defaults.putBoolean(soundKey, true);
+    }
+    defaults.apply();
+  }
+
   @Override
   public void onWindowFocusChanged(boolean hasFocus) {
     super.onWindowFocusChanged(hasFocus);
 
     if (hasFocus) {
       immersion.hideSystemUI();
-      getWindow().setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION, WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+      getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+      getWindow().setNavigationBarColor(0x80000000);
     }
   }
 

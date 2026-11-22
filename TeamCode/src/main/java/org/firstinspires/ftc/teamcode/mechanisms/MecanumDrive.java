@@ -10,9 +10,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 public class MecanumDrive {
@@ -102,16 +100,42 @@ public class MecanumDrive {
     }
 
     public void driveFieldRelative(double forward, double strafe, double rotate) {
+        driveFieldRelative(forward, strafe, rotate,
+                imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+    }
+
+    private void driveFieldRelative(double forward, double strafe, double rotate, double yaw) {
         double theta = Math.atan2(forward, strafe) + Math.toRadians(FIELD_FORWARD_OFFSET_DEGREES);
         double r = Math.hypot(strafe, forward);
 
-        theta = AngleUnit.normalizeRadians(theta -
-                imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+        theta = AngleUnit.normalizeRadians(theta - yaw);
         double newForward = r * Math.sin(theta);
         double newStrafe = r * Math.cos(theta);
 
         this.drive(newForward, newStrafe, rotate);
 
+    }
+
+    /** Runs a timed field-relative move while holding the specified yaw. */
+    public boolean driveFieldRelativeHoldingHeading(double forward, double headingDegrees,
+                                                     long durationMs, LinearOpMode opMode,
+                                                     Runnable onDriveUpdate) {
+        ElapsedTime timer = new ElapsedTime();
+        try {
+            while (opMode.opModeIsActive() && timer.milliseconds() < durationMs) {
+                double yaw = getHeadingDegrees();
+                if (!Double.isFinite(yaw) || !Double.isFinite(headingDegrees)) {
+                    return false;
+                }
+                double error = AngleUnit.normalizeDegrees(headingDegrees - yaw);
+                double rotate = Range.clip(-error * TURN_POWER_PER_DEGREE, -0.2, 0.2);
+                driveFieldRelative(forward, 0, rotate, Math.toRadians(yaw));
+                onDriveUpdate.run();
+            }
+            return opMode.opModeIsActive();
+        } finally {
+            drive(0, 0, 0);
+        }
     }
 
     /** Sets the current robot heading as zero for field-relative driving. */
@@ -129,10 +153,18 @@ public class MecanumDrive {
      * Call after start. Returns true when the heading is within tolerance.
      */
     public boolean turnToAngle(double targetAngleDegrees, long timeoutMs, LinearOpMode opMode) {
+        return turnToAngle(targetAngleDegrees, timeoutMs, opMode, () -> {});
+    }
+
+    public boolean turnToAngle(double targetAngleDegrees, long timeoutMs, LinearOpMode opMode,
+                               Runnable onDriveUpdate) {
         ElapsedTime timer = new ElapsedTime();
         try {
             while (opMode.opModeIsActive() && timer.milliseconds() < timeoutMs) {
                 double yawDegrees = getHeadingDegrees();
+                if (!Double.isFinite(yawDegrees) || !Double.isFinite(targetAngleDegrees)) {
+                    return false;
+                }
                 double errorDegrees = AngleUnit.normalizeDegrees(targetAngleDegrees - yawDegrees);
                 if (Math.abs(errorDegrees) <= TURN_TOLERANCE_DEGREES) {
                     return true;
@@ -142,6 +174,7 @@ public class MecanumDrive {
                 double rotate = Range.clip(-errorDegrees * TURN_POWER_PER_DEGREE,
                         -MAX_TURN_POWER, MAX_TURN_POWER);
                 drive(0, 0, rotate);
+                onDriveUpdate.run();
             }
             return false;
         } finally {
@@ -155,10 +188,16 @@ public class MecanumDrive {
      */
     public void driveFieldRelativeForMS(double forward, double strafe, double rotate,
                                         long durationMs, LinearOpMode opMode) {
+        driveFieldRelativeForMS(forward, strafe, rotate, durationMs, opMode, () -> {});
+    }
+
+    public void driveFieldRelativeForMS(double forward, double strafe, double rotate,
+                                        long durationMs, LinearOpMode opMode, Runnable onDriveUpdate) {
         ElapsedTime timer = new ElapsedTime();
         try {
             while (opMode.opModeIsActive() && timer.milliseconds() < durationMs) {
                 driveFieldRelative(forward, strafe, rotate);
+                onDriveUpdate.run();
             }
         } finally {
             drive(0, 0, 0);
