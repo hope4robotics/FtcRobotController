@@ -6,11 +6,13 @@ import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 public class MecanumDrive {
@@ -18,7 +20,7 @@ public class MecanumDrive {
     // Positive offsets rotate field-forward counterclockwise from the nose.
     private static final double FIELD_FORWARD_OFFSET_DEGREES = 90.0;
 
-    private static final double TURN_TOLERANCE_DEGREES = 2.0;
+    public static final double TURN_TOLERANCE_DEGREES = 2.0;
     private static final double TURN_POWER_PER_DEGREE = 0.02;
     private static final double MAX_TURN_POWER = 0.5;
 
@@ -28,6 +30,12 @@ public class MecanumDrive {
     private DcMotor frontRightMotor = null;
     private DcMotor backRightMotor = null;
     private IMU imu;
+
+    private double commandedRotation;
+    private double commandedFrontLeftPower;
+    private double commandedBackLeftPower;
+    private double commandedFrontRightPower;
+    private double commandedBackRightPower;
 
 
     public void init(HardwareMap hwMap) {
@@ -92,11 +100,37 @@ public class MecanumDrive {
         maxPower = Math.max(maxPower, Math.abs(frontRightPower));
         maxPower = Math.max(maxPower, Math.abs(backRightPower));
 
-        frontLeftMotor.setPower(frontLeftPower / maxPower);
-        backLeftMotor.setPower(backLeftPower / maxPower);
-        frontRightMotor.setPower(frontRightPower / maxPower);
-        backRightMotor.setPower(backRightPower / maxPower);
+        commandedRotation = rotate;
+        commandedFrontLeftPower = frontLeftPower / maxPower;
+        commandedBackLeftPower = backLeftPower / maxPower;
+        commandedFrontRightPower = frontRightPower / maxPower;
+        commandedBackRightPower = backRightPower / maxPower;
 
+        frontLeftMotor.setPower(commandedFrontLeftPower);
+        backLeftMotor.setPower(commandedBackLeftPower);
+        frontRightMotor.setPower(commandedFrontRightPower);
+        backRightMotor.setPower(commandedBackRightPower);
+
+    }
+
+    /** Adds the latest drive commands as numeric telemetry. Positive yaw command is clockwise. */
+    public void addCommandTelemetry(Telemetry telemetry, StringBuilder csvRow) {
+        addDriveSample(telemetry, csvRow, "Drive yaw command (CW positive)", commandedRotation);
+        addDriveSample(telemetry, csvRow, "Drive front left power", commandedFrontLeftPower);
+        addDriveSample(telemetry, csvRow, "Drive back left power", commandedBackLeftPower);
+        addDriveSample(telemetry, csvRow, "Drive front right power", commandedFrontRightPower);
+        addDriveSample(telemetry, csvRow, "Drive back right power", commandedBackRightPower);
+        addDriveSample(telemetry, csvRow, "Drive front left velocity (ticks/s)", ((DcMotorEx) frontLeftMotor).getVelocity());
+        addDriveSample(telemetry, csvRow, "Drive back left velocity (ticks/s)", ((DcMotorEx) backLeftMotor).getVelocity());
+        addDriveSample(telemetry, csvRow, "Drive front right velocity (ticks/s)", ((DcMotorEx) frontRightMotor).getVelocity());
+        addDriveSample(telemetry, csvRow, "Drive back right velocity (ticks/s)", ((DcMotorEx) backRightMotor).getVelocity());
+    }
+
+    private void addDriveSample(Telemetry telemetry, StringBuilder csvRow, String key, double value) {
+        telemetry.addData(key, value);
+        if (csvRow != null) {
+            csvRow.append(',').append(value);
+        }
     }
 
     public void driveFieldRelative(double forward, double strafe, double rotate) {
